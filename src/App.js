@@ -1,28 +1,42 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useContext, useEffect } from "react";
+import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import styled from "react-emotion";
+import { parse } from "query-string";
+import { AuthContext, Provider } from "./AuthContext";
 
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
-    );
-  }
-}
+const { REACT_APP_AUTH_URL: AUTH_URL } = process.env;
+
+const AuthBox = styled("div")`
+  margin: 64px auto;
+`;
+
+const ReceiveToken = props => {
+  const { payload } = parse(props.location.search);
+
+  const [state, actions] = useContext(AuthContext);
+  const { loginWithTemporaryToken } = actions;
+
+  useEffect(() => payload && loginWithTemporaryToken(payload), [payload]);
+
+  return <span>{(state.user && state.user.username) || "Not Logged In"}</span>;
+};
+
+const App = () => {
+  return (
+    <Router>
+      <Provider>
+        <AuthBox>
+          <Route exact path="/">
+            <form method="POST" action={`${AUTH_URL}/register`}>
+              <input id="email" name="email" />
+              <input type="submit" />
+            </form>
+          </Route>
+          <Route path="/auth" component={ReceiveToken} />
+        </AuthBox>
+      </Provider>
+    </Router>
+  );
+};
 
 export default App;
